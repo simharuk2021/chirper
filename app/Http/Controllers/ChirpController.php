@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Chirp;    
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class ChirpController extends Controller
 {
+    use AuthorizesRequests;
     public function index()
         {
             $chirps = Chirp::with('user')
@@ -33,10 +35,8 @@ class ChirpController extends Controller
         $validated = $request->validate([
         'message' => 'required|string|max:255|min:5',
     ]);
-        Chirp::create([
-        'message' => $validated['message'],
-        'user_id' => null, // We'll add authentication in lesson 11
-        ]);
+        auth()->user()->chirps()->create($validated);
+
         return redirect('/')->with('success', 'Chirp created!');
 
     }
@@ -56,12 +56,13 @@ class ChirpController extends Controller
 
     public function edit(Chirp $chirp)
     {
-    // We'll add authorization in lesson 11
+    $this->authorize('update', $chirp);
     return view('chirps.edit', compact('chirp'));
     }
 
     public function update(Request $request, Chirp $chirp)
     {
+        $this->authorize('update', $chirp);
         // Validate
         $validated = $request->validate([
         'message' => 'required|string|max:255',
